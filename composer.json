@@ -1,0 +1,49 @@
+{
+  "name": "kunicmarko/simple-di",
+  "type": "library",
+  "description": "Simple Dependency Injection Container.",
+  "keywords": [
+    "php",
+    "dependency-injection",
+    "annotations"
+  ],
+  "homepage": "https://github.com/kunicmarko20/SimpleDI",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marko Kunic",
+      "email": "kunicmarko20@gmail.com",
+      "homepage": "https://twitter.com/kunicmarko20"
+    }
+  ],
+  "require": {
+    "php": "^7.1",
+    "doctrine/annotations": "^1.6",
+    "psr/container": "^1.0",
+    "symfony/finder": "^4.1"
+  },
+  "require-dev": {
+    "symfony/phpunit-bridge": "^4.0"
+  },
+  "provide": {
+    "psr/container-implementation": "^1.0"
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "KunicMarko\\SimpleDI\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "KunicMarko\\SimpleDI\\Tests\\": "tests/"
+    }
+  }
+}
