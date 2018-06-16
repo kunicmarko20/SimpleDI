@@ -11,8 +11,20 @@ use KunicMarko\SimpleDI\Annotation\Service;
  */
 class Service2
 {
+    public const TEST_PARAMETER = 'service2.word';
+
+    /**
+     * @var string
+     */
+    private $word;
+
+    public function __construct(string $word = self::TEST_PARAMETER)
+    {
+        $this->word = $word;
+    }
+
     public function talk()
     {
-        return 'bla';
+        return $this->word;
     }
 }

@@ -24,16 +24,31 @@ final class Container implements ContainerInterface
      */
     private $annotationReader;
 
+    /**
+     * @var ParameterBag
+     */
+    private $parameterBag;
+
+    public function __construct(ParameterBag $parameterBag = null)
+    {
+        $this->parameterBag = $parameterBag ?? new ParameterBag();
+    }
+
     public function get($id)
     {
         if (!isset($this->services[$id])) {
-            throw NotFoundException::serviceNotFound($id);
+            throw ContainerException::serviceNotFound($id);
         }
 
         return $this->services[$id];
     }
 
-    public function has($id)
+    public function getParameterBag(): ParameterBag
+    {
+        return $this->parameterBag;
+    }
+
+    public function has($id): bool
     {
         return isset($this->services[$id]);
     }
@@ -45,7 +60,7 @@ final class Container implements ContainerInterface
 
     public function compile(): ContainerInterface
     {
-        foreach ($this->findFiles(__DIR__) as $file) {
+        foreach ($this->findFiles($this->parameterBag->get(ParameterBag::SIMPLE_DI_SERVICE_SCAN_DIRECTORY)) as $file) {
             if (!($className = $this->getFullyQualifiedClassName($file))) {
                 continue;
             }
@@ -54,6 +69,7 @@ final class Container implements ContainerInterface
                 continue;
             }
 
+            //@TODO Remove this and add logic that supports resolving of Interface
             if (!$reflectionClass->isInstantiable()) {
                 throw ContainerException::notInstantiable($className);
             }
@@ -140,12 +156,8 @@ final class Container implements ContainerInterface
         /** @var \ReflectionParameter $parameter */
         foreach ($parameters as $parameter) {
             if (!($dependency = $parameter->getClass())) {
-                if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
-                    continue;
-                }
-
-                throw ContainerException::classDependencyUnresolvable($parameter->getName());
+                $dependencies[] = $this->resolveParameter($parameter);
+                continue;
             }
 
             if (($service = $this->get($dependency->getName())) instanceof \ReflectionClass) {
@@ -156,5 +168,19 @@ final class Container implements ContainerInterface
         }
 
         return $dependencies;
+    }
+
+    private function resolveParameter(\ReflectionParameter $parameter)
+    {
+        if (!$parameter->isDefaultValueAvailable()) {
+            throw ContainerException::classDependencyUnresolvable($parameter->getName());
+        }
+
+        //@TODO think about replacing this logic with Annotation
+        if (($value = $parameter->getDefaultValue()) && $this->parameterBag->has($value)) {
+            return $this->parameterBag->get($value);
+        }
+
+        return $value;
     }
 }
