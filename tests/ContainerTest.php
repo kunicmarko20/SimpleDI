@@ -8,6 +8,7 @@ use KunicMarko\SimpleDI\ParameterBag;
 use KunicMarko\SimpleDI\ParameterException;
 use KunicMarko\SimpleDI\Tests\Fixtures\Service1;
 use KunicMarko\SimpleDI\Tests\Fixtures\Service2;
+use KunicMarko\SimpleDI\Tests\Fixtures\Service3;
 use PHPUnit\Framework\TestCase;
 
 class ContainerTest extends TestCase
@@ -24,7 +25,7 @@ class ContainerTest extends TestCase
 
     public function testCompile()
     {
-        $this->container->getParameterBag()->set([
+        $this->container->getParameterBag()->replace([
             ParameterBag::SIMPLE_DI_SERVICE_SCAN_DIRECTORY => __DIR__ . '/Fixtures',
             Service2::TEST_PARAMETER => 'test word',
         ]);
@@ -36,7 +37,13 @@ class ContainerTest extends TestCase
             $service1 = $this->container->get(Service1::class)
         );
 
+        $this->assertInstanceOf(
+            $service3class = Service3::class,
+            $service3 = $this->container->get(Service3::class)
+        );
+
         $this->assertSame('test word', $service1->talk());
+        $this->assertSame($service3class, $service3->talk());
     }
 
     public function testMissingDirectoryParameter()
@@ -48,9 +55,10 @@ class ContainerTest extends TestCase
 
     public function testMissingParameterInContainer()
     {
-        $this->container->getParameterBag()->set([
-            ParameterBag::SIMPLE_DI_SERVICE_SCAN_DIRECTORY => __DIR__ . '/Fixtures',
-        ]);
+        $this->container->getParameterBag()->set(
+            ParameterBag::SIMPLE_DI_SERVICE_SCAN_DIRECTORY,
+            __DIR__ . '/Fixtures'
+        );
 
         $this->container->compile();
 

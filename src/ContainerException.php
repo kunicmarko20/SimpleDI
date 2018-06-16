@@ -2,6 +2,7 @@
 
 namespace KunicMarko\SimpleDI;
 
+use KunicMarko\SimpleDI\Annotation\Resolve;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -31,6 +32,16 @@ final class ContainerException extends \LogicException implements ContainerExcep
         return new self(sprintf(
             'No entry was found for "%s" identifier.',
             $id
+        ));
+    }
+
+    public static function unableToAutowireInterface(string $interface, string $class)
+    {
+        return new self(sprintf(
+            'Unable to Autowire "%s" interface in "%s" class, try adding "%s" annotation.',
+            $interface,
+            $class,
+            Resolve::class
         ));
     }
 }

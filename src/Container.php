@@ -4,6 +4,7 @@ namespace KunicMarko\SimpleDI;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
+use KunicMarko\SimpleDI\Annotation\Resolve;
 use KunicMarko\SimpleDI\Annotation\Service;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Finder\Finder;
@@ -29,6 +30,11 @@ final class Container implements ContainerInterface
      */
     private $parameterBag;
 
+    /**
+     * @var string[][]
+     */
+    private $interfaceImplementations = [];
+
     public function __construct(ParameterBag $parameterBag = null)
     {
         $this->parameterBag = $parameterBag ?? new ParameterBag();
@@ -53,9 +59,14 @@ final class Container implements ContainerInterface
         return isset($this->services[$id]);
     }
 
-    public function set($id, \ReflectionClass $class)
+    public function set(string $id, \ReflectionClass $class)
     {
         return $this->services[$id] = $class;
+    }
+
+    public function remove(string $name): void
+    {
+        unset($this->services[$name]);
     }
 
     public function compile(): ContainerInterface
@@ -69,7 +80,6 @@ final class Container implements ContainerInterface
                 continue;
             }
 
-            //@TODO Remove this and add logic that supports resolving of Interface
             if (!$reflectionClass->isInstantiable()) {
                 throw ContainerException::notInstantiable($className);
             }
@@ -144,27 +154,33 @@ final class Container implements ContainerInterface
             return $reflectionClass->newInstance();
         }
 
-        $dependencies = $this->getDependencies($constructor->getParameters());
+        $dependencies = $this->getDependencies($constructor);
 
         return $reflectionClass->newInstanceArgs($dependencies);
     }
 
-    private function getDependencies(array $parameters): array
+    private function getDependencies(\ReflectionMethod $method): array
     {
         $dependencies = [];
 
         /** @var \ReflectionParameter $parameter */
-        foreach ($parameters as $parameter) {
+        foreach ($method->getParameters() as $parameter) {
             if (!($dependency = $parameter->getClass())) {
                 $dependencies[] = $this->resolveParameter($parameter);
                 continue;
             }
 
-            if (($service = $this->get($dependency->getName())) instanceof \ReflectionClass) {
-                $this->services[$dependency->getName()] = $this->resolveService($service);
+            $dependencyClassName = $dependency->getName();
+
+            if ($dependency->isInterface()) {
+                $dependencyClassName = $this->resolveInterface($method, $dependencyClassName);
             }
 
-            $dependencies[] = $this->get($dependency->getName());
+            if (($service = $this->get($dependencyClassName)) instanceof \ReflectionClass) {
+                $this->services[$dependencyClassName] = $this->resolveService($service);
+            }
+
+            $dependencies[] = $this->get($dependencyClassName);
         }
 
         return $dependencies;
@@ -182,5 +198,31 @@ final class Container implements ContainerInterface
         }
 
         return $value;
+    }
+
+    private function resolveInterface(\ReflectionMethod $method, string $dependencyClassName): string
+    {
+        if (isset($this->interfaceImplementations[$class = $method->getDeclaringClass()->getName()])) {
+            return $this->getImplementation($class, $dependencyClassName);
+        }
+
+        foreach ($this->getAnnotationReader()->getMethodAnnotations($method) as $annotation) {
+            if (!$annotation instanceof Resolve) {
+                continue;
+            }
+
+            $this->interfaceImplementations[$class][$annotation->getInterface()] = $annotation->getImplementation();
+        }
+
+        return $this->getImplementation($class, $dependencyClassName);
+    }
+
+    private function getImplementation(string $class, string $dependencyClassName): string
+    {
+        if (!isset($this->interfaceImplementations[$class][$dependencyClassName])) {
+            throw ContainerException::unableToAutowireInterface($dependencyClassName, $class);
+        }
+
+        return $this->interfaceImplementations[$class][$dependencyClassName];
     }
 }

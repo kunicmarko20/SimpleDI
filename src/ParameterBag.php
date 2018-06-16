@@ -28,12 +28,12 @@ final class ParameterBag
         return $this->parameters[$id];
     }
 
-    public function add(string $id, $value): void
+    public function set(string $id, $value): void
     {
         $this->parameters[$id] = $value;
     }
 
-    public function set(array $parameters): void
+    public function replace(array $parameters): void
     {
         $this->parameters = $parameters;
     }
@@ -46,5 +46,10 @@ final class ParameterBag
     public function has(string $id): bool
     {
         return array_key_exists($id, $this->parameters);
+    }
+
+    public function remove(string $name): void
+    {
+        unset($this->parameters[$name]);
     }
 }
