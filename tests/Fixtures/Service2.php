@@ -2,6 +2,7 @@
 
 namespace KunicMarko\SimpleDI\Tests\Fixtures;
 
+use KunicMarko\SimpleDI\Annotation\Resolve;
 use KunicMarko\SimpleDI\Annotation\Service;
 
 /**
@@ -18,7 +19,12 @@ class Service2
      */
     private $word;
 
-    public function __construct(string $word = self::TEST_PARAMETER)
+    /**
+     * @Resolve({
+     *     "word" : "service2.word"
+     * })
+     */
+    public function __construct(string $word)
     {
         $this->word = $word;
     }

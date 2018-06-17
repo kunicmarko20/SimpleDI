@@ -22,7 +22,7 @@ final class ContainerException extends \LogicException implements ContainerExcep
     public static function classDependencyUnresolvable(string $dependency)
     {
         return new self(sprintf(
-            'Can not resolve class dependency "%s".',
+            'Class dependency "%s" unresolvable.',
             $dependency
         ));
     }
@@ -43,5 +43,10 @@ final class ContainerException extends \LogicException implements ContainerExcep
             $class,
             Resolve::class
         ));
+    }
+
+    public static function built()
+    {
+        return new self("Container has already been built, you can't fetch anything from Builder.");
     }
 }

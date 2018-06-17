@@ -23,7 +23,9 @@ class Service1
     private $service3;
 
     /**
-     * @Resolve(interface=Service3Interface::class, implementation=Service3::class)
+     * @Resolve({
+     *     Service3Interface::class : Service3::class
+     * })
      */
     public function __construct(Service2 $service2, Service3Interface $service3)
     {

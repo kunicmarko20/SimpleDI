@@ -11,40 +11,7 @@ namespace KunicMarko\SimpleDI\Annotation;
 final class Resolve
 {
     /**
-     * @var string
+     * @var array
      */
-    public $interface;
-
-    /**
-     * @var string
-     */
-    public $implementation;
-
-    public function getInterface(): string
-    {
-        if ($this->interface) {
-            return $this->interface;
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf(
-                'Argument "interface" is mandatory in "%s" annotation.',
-                self::class
-            )
-        );
-    }
-
-    public function getImplementation(): string
-    {
-        if ($this->implementation) {
-            return $this->implementation;
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf(
-                'Argument "implementation" is mandatory in "%s" annotation.',
-                self::class
-            )
-        );
-    }
+    public $values = [];
 }

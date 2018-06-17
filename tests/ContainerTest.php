@@ -2,9 +2,8 @@
 
 namespace KunicMarko\SimpleDI\Tests;
 
-use KunicMarko\SimpleDI\Container;
-use KunicMarko\SimpleDI\ContainerException;
-use KunicMarko\SimpleDI\ParameterBag;
+use KunicMarko\SimpleDI\ContainerBuilder;
+use KunicMarko\SimpleDI\ParameterBagBuilder;
 use KunicMarko\SimpleDI\ParameterException;
 use KunicMarko\SimpleDI\Tests\Fixtures\Service1;
 use KunicMarko\SimpleDI\Tests\Fixtures\Service2;
@@ -14,32 +13,32 @@ use PHPUnit\Framework\TestCase;
 class ContainerTest extends TestCase
 {
     /**
-     * @var Container
+     * @var ContainerBuilder
      */
     private $container;
 
     public function setUp()
     {
-        $this->container = new Container();
+        $this->container = new ContainerBuilder();
     }
 
     public function testCompile()
     {
         $this->container->getParameterBag()->replace([
-            ParameterBag::SIMPLE_DI_SERVICE_SCAN_DIRECTORY => __DIR__ . '/Fixtures',
+            ParameterBagBuilder::SIMPLE_DI_SERVICE_SCAN_DIRECTORY => __DIR__ . '/Fixtures',
             Service2::TEST_PARAMETER => 'test word',
         ]);
 
-        $this->container->compile();
+        $container = $this->container->build();
 
         $this->assertInstanceOf(
             Service1::class,
-            $service1 = $this->container->get(Service1::class)
+            $service1 = $container->get(Service1::class)
         );
 
         $this->assertInstanceOf(
             $service3class = Service3::class,
-            $service3 = $this->container->get(Service3::class)
+            $service3 = $container->get(Service3::class)
         );
 
         $this->assertSame('test word', $service1->talk());
@@ -50,19 +49,21 @@ class ContainerTest extends TestCase
     {
         $this->expectException(ParameterException::class);
 
-        $this->container->compile();
+        $this->container->build();
     }
 
     public function testMissingParameterInContainer()
     {
         $this->container->getParameterBag()->set(
-            ParameterBag::SIMPLE_DI_SERVICE_SCAN_DIRECTORY,
+            ParameterBagBuilder::SIMPLE_DI_SERVICE_SCAN_DIRECTORY,
             __DIR__ . '/Fixtures'
         );
 
-        $this->container->compile();
+        $this->expectException(ParameterException::class);
 
-        $service1 = $this->container->get(Service1::class);
+        $container = $this->container->build();
+
+        $service1 = $container->get(Service1::class);
 
         $this->assertSame('service2.word', $service1->talk());
     }
