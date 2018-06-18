@@ -3,7 +3,7 @@
 namespace KunicMarko\SimpleDI\Compiler;
 
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
+use Iterator;
 
 /**
  * @author Marko Kunic <kunicmarko20@gmail.com>
@@ -20,64 +20,23 @@ final class ClassFinder
         $this->finder = $finder ?? new Finder();
     }
 
-    public function findClassesInDirectories(array $directories): array
+    /**
+     * @param string|array $directories
+     */
+    public function findClassesInDirectories($directories): ClassIterator
     {
-        $classes = [];
-
-        foreach ($directories as $directory) {
-            $classes = array_merge($classes, $this->findClassesInDirectory($directory));
-        }
-
-        return array_unique($classes);
+        return new ClassIterator($this->findFilesInDirectory($directories));
     }
 
-    public function findClassesInDirectory(string $directory): array
-    {
-        $classes = [];
-
-        foreach ($this->findFilesInDirectory($directory) as $file) {
-            if (!($class = $this->getFullyQualifiedClassName($file))) {
-                continue;
-            }
-
-            $classes[] = $class;
-        }
-
-        return array_unique($classes);
-    }
-
-    private function findFilesInDirectory(string $directory): \IteratorAggregate
+    /**
+     * @param string|array $directories
+     */
+    private function findFilesInDirectory($directories): Iterator
     {
         return $this->finder
-            ->in($directory)
+            ->in($directories)
             ->files()
-            ->name('*.php');
-    }
-
-    private function getFullyQualifiedClassName(SplFileInfo $file): ?string
-    {
-        if (!($namespace = $this->getNamespace($file->getPathname()))) {
-            return null;
-        }
-
-        return $namespace . '\\' . $this->getClassName($file->getFilename());
-    }
-
-    private function getNamespace(string $filePath): ?string
-    {
-        $namespaceLine = preg_grep('/^namespace /', file($filePath));
-
-        if (!$namespaceLine) {
-            return null;
-        }
-
-        preg_match('/namespace (.*);$/', reset($namespaceLine), $match);
-
-        return array_pop($match);
-    }
-
-    private function getClassName(string $fileName): string
-    {
-        return str_replace('.php', '', $fileName);
+            ->name('*.php')
+            ->getIterator();
     }
 }

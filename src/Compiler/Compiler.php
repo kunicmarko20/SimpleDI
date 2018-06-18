@@ -62,7 +62,7 @@ final class Compiler
     {
         $classReflectors = [];
 
-        foreach ($this->classFinder->findClassesInDirectory(
+        foreach ($this->classFinder->findClassesInDirectories(
             $this->containerBuilder->getParameter(ParameterBagBuilder::SIMPLE_DI_SERVICE_SCAN_DIRECTORY)
         ) as $class) {
             if (!($this->hasServiceAnnotation($reflectionClass = new ReflectionClass($class)))) {
@@ -71,6 +71,10 @@ final class Compiler
 
             if (!$reflectionClass->isInstantiable()) {
                 throw ContainerException::notInstantiable($class);
+            }
+
+            if (isset($classReflectors[$class])) {
+                continue;
             }
 
             $classReflectors[$class] = $reflectionClass;
